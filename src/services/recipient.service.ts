@@ -213,6 +213,7 @@ class RecipientService {
         id: true,
         name: true,
         state: true,
+        dob: true,
       },
     };
 

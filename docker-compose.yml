@@ -6,7 +6,7 @@ services:
     container_name: proxy
     ports:
       - '80:80'
-      - '443:443'
+     # - '443:443'
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - /etc/letsencrypt/:/etc/letsencrypt/
@@ -37,12 +37,12 @@ services:
     depends_on:
       - redis
   redis:
-    image: redislabs/redisearch
+    image: redislabs/redisearch:2.2.6
     container_name: redis
     ports:
       - '6379:6379'
     volumes:
-      - /local-data/:/data
+      - ./redis-data/:/data
     restart: 'unless-stopped'
     networks:
       - backend
