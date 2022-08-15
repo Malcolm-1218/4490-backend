@@ -1,18 +1,26 @@
-import { recipient } from '@prisma/client';
+import { recipient, politician } from '@prisma/client';
 
 export type Recipient = recipient;
+export type Politician = politician;
+
+export interface Leadership_spells {
+  role_name: string;
+  rank: number;
+}
+
+export interface CareerType {
+  sub_type: string;
+}
 
 export interface DonationsByMonth {
   month_start_date: string;
   amount_donated: number;
 }
-[];
 
 export interface TopDonators {
   contributor: string;
   total_amount: number;
 }
-[];
 
 export interface IdeologyDistribution {
   ideology: number;

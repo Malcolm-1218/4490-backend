@@ -8,11 +8,34 @@ datasource db {
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model career {
+  vb_id      String     @db.VarChar(8)
+  wiki_id    String     @db.VarChar(255)
+  type       String     @db.VarChar(255)
+  subtype    String     @db.VarChar(255)
+  full_name  String     @db.VarChar(255)
+  start_date DateTime   @db.Date
+  end_date   DateTime?  @db.Date
+  flowtext   String?    @db.VarChar(255)
+  politician politician @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([vb_id, subtype, start_date])
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model committee {
   id   String?
   name String?
 
   @@ignore
+}
+
+model committee2 {
+  thomas_id             String                  @id
+  name                  String
+  rank                  String
+  committee_membership2 committee_membership2[]
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
@@ -24,21 +47,72 @@ model committee_membership {
   @@ignore
 }
 
+model committee_membership2 {
+  vb_id          String     @db.VarChar(8)
+  name           String     @db.VarChar(65535)
+  chamber        String     @db.VarChar(8)
+  title          String?    @db.VarChar(255)
+  rank           Int?
+  seniority      Int?
+  thomas_id      String     @db.VarChar(4)
+  congress       Int
+  committeeyears Int?
+  start_date     DateTime   @db.Date
+  end_date       DateTime   @db.Date
+  committee2     committee2 @relation(fields: [thomas_id], references: [thomas_id], onDelete: NoAction, onUpdate: NoAction)
+  politician     politician @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([vb_id, thomas_id, congress, start_date])
+}
+
+model corporation {
+  vb_id              String  @id @db.VarChar(8)
+  cusip_id           String  @db.VarChar(9)
+  gvkey_id           String  @db.VarChar(8)
+  duns_id            String? @db.VarChar(255)
+  opensecrets_corpid String? @db.VarChar(255)
+  name               String  @db.VarChar(255)
+  industry_execu     String  @db.VarChar(255)
+  crp_catcode        String  @db.VarChar(3)
+  location           String  @db.VarChar(255)
+  revenue            Int
+  total_employees    Int
+  nama_org_id        String? @db.VarChar(255)
+  wiki_id            String? @db.VarChar(255)
+  unit               unit    @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
 model donation {
-  id           String        @id
-  org_id       String?
-  rec_id       String
-  date         DateTime      @db.Date
-  amount       Decimal       @db.Decimal
-  occupation   String?
-  city         String
-  state        String
-  organization organization? @relation(fields: [org_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  recipient    recipient     @relation(fields: [rec_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id         String   @id
+  org_id     String?
+  rec_id     String
+  date       DateTime @db.Date
+  amount     Decimal  @db.Decimal
+  occupation String?
+  city       String
+  state      String
+  org_vb_id  String?  @db.VarChar(8)
+  rec_vb_id  String?  @db.VarChar(8)
 
   @@index([date], map: "idx_date")
   @@index([org_id], map: "idx_ord_id")
   @@index([rec_id], map: "idx_rec_id")
+}
+
+model individual_index {
+  first_name      String
+  last_name       String
+  type            String
+  sub_type        String
+  bioguide_id     String?
+  icpsr_id        String?
+  revolver_id     String?
+  lobby_id        String?
+  wikidata_id     String
+  civilservice_id String?
+  vb_id           String  @id
+  start_year      Int?    @db.SmallInt
+  end_year        Int?    @db.SmallInt
 }
 
 model leadership_role {
@@ -46,9 +120,31 @@ model leadership_role {
   title      String
   start_date DateTime? @db.Date
   end_date   DateTime? @db.Date
-  recipient  recipient @relation(fields: [rec_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  vb_id      String?   @db.VarChar(8)
 
   @@id([rec_id, title])
+}
+
+model leadership_spells {
+  vb_id      String
+  type       String
+  role_name  String
+  rank       Int      @db.SmallInt
+  start_date DateTime @db.Date
+  end_date   DateTime @db.Date
+
+  @@id([vb_id, start_date])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model member_rank {
+  vb_id      String?
+  thomas_id  String?
+  rank       Int?      @db.SmallInt
+  start_date DateTime? @db.Date
+  end_date   DateTime? @db.Date
+
+  @@ignore
 }
 
 model office {
@@ -56,7 +152,6 @@ model office {
   title      String
   start_date DateTime? @db.Date
   end_date   DateTime? @db.Date
-  recipient  recipient @relation(fields: [rec_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([rec_id, title])
 }
@@ -80,33 +175,77 @@ model organization {
   uni_enrollment_low  Decimal?            @db.Decimal
   uni_enrollment_high Decimal?            @db.Decimal
   website             String?
-  donation            donation[]
   recipient           recipient[]
   registered_voters   registered_voters[]
 
   @@index([industry], map: "idx_industry")
 }
 
+model organization_index {
+  name        String
+  type        String
+  wikidata_id String @id
+}
+
+model party_affiliation {
+  vb_id      String
+  caucus     String
+  party      String?
+  start_date DateTime @db.Date
+  end_date   DateTime @db.Date
+
+  @@id([vb_id, start_date])
+}
+
+model politician {
+  vb_id                 String                  @id @db.VarChar(8)
+  bioguide_id           String?                 @db.VarChar(7)
+  icpsr_id              String?                 @db.VarChar(5)
+  opensecrets_id        String?                 @db.VarChar(9)
+  govtrack_id           Int?
+  wiki_id               String                  @db.VarChar(15)
+  fname                 String?                 @db.VarChar(25)
+  mname                 String?                 @db.VarChar(25)
+  lname                 String?                 @db.VarChar(25)
+  gender                String?                 @db.VarChar(2)
+  birthday              DateTime?               @db.Date
+  state                 String?                 @db.VarChar(2)
+  party                 String?                 @db.VarChar(50)
+  full_name             String?                 @db.VarChar(75)
+  death_date            DateTime?               @db.Date
+  image                 String?                 @db.VarChar(500)
+  delegate              String?                 @db.VarChar(255)
+  unit                  unit                    @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+  career                career[]                @ignore
+  cmte                  cmte[]
+  committee_membership2 committee_membership2[]
+  ideology_score        ideology_score[]
+  leadership_spell      leadership_spell[]
+  pac_to_candidate      pac_to_candidate[]
+  pac_to_pac            pac_to_pac[]
+  politician_education  politician_education[]
+  sentiment_analysis    sentiment_analysis[]
+}
+
 model recipient {
-  id                       String            @id
-  name                     String?
-  description              String?
-  ideology                 Decimal?          @db.Decimal
-  party                    String?
-  dob                      DateTime?         @db.Date
-  school                   String?
-  office                   String?
-  role                     String?
-  state                    String?
-  wealth                   Decimal?          @db.Decimal
-  recent_wealth            Decimal?          @db.Decimal
-  wealth_incrase           Decimal?          @db.Decimal
-  house_exit_reason        String?
-  senate_exit_reason       String?
-  organization             organization?     @relation(fields: [school], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  donation                 donation[]
-  leadership_role          leadership_role[]
-  office_officeTorecipient office[]
+  id                 String
+  name               String?
+  description        String?
+  ideology           Decimal?      @db.Decimal
+  party              String?
+  dob                DateTime?     @db.Date
+  school             String?
+  office             String?
+  role               String?
+  state              String?
+  wealth             Decimal?      @db.Decimal
+  recent_wealth      Decimal?      @db.Decimal
+  wealth_incrase     Decimal?      @db.Decimal
+  house_exit_reason  String?
+  senate_exit_reason String?
+  opensecrets_id     String?       @db.VarChar(9)
+  vb_id              String        @id @db.VarChar(8)
+  organization       organization? @relation(fields: [school], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model registered_voters {
@@ -117,4 +256,207 @@ model registered_voters {
   organization organization @relation(fields: [org_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([org_id, year])
+}
+
+model sentiment_analysis {
+  vb_id           String
+  date            DateTime   @db.Date
+  sentiment_base  Float
+  sentiment_other Float
+  retweets        Float
+  politician      politician @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([vb_id, date])
+}
+
+model unit {
+  vb_id          String           @id @db.VarChar(8)
+  classification String?          @db.VarChar(50)
+  wiki_id        String?          @db.VarChar(50)
+  cusip_id       String?          @db.VarChar(50)
+  gvkey_id       String?          @db.VarChar(50)
+  corporation    corporation?
+  indiv_donation indiv_donation[]
+  politician     politician?
+  university     university?
+}
+
+model university {
+  vb_id                String                 @id @db.VarChar(8)
+  wiki_id              String                 @db.VarChar(255)
+  name                 String                 @db.VarChar(255)
+  location             String?                @db.VarChar(255)
+  acronym              String?                @db.VarChar(255)
+  rank                 String?                @db.VarChar(255)
+  founded              Int?
+  public               String?                @db.VarChar(255)
+  enrollment_low       Int?
+  enrollment_high      Int?
+  website              String?                @db.VarChar(255)
+  subsidiaryof_wiki    String?                @db.VarChar(255)
+  subsidiaryof_name    String?                @db.VarChar(255)
+  system_wiki          String?                @db.VarChar(255)
+  system_name          String?                @db.VarChar(255)
+  foreigncountry       String?                @db.VarChar(255)
+  unit                 unit                   @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+  politician_education politician_education[]
+}
+
+model career2 {
+  vb_id          String      @db.VarChar(8)
+  type           String?
+  subtype        String?
+  fname          String
+  mname          String?
+  lname          String
+  full_name      String?
+  fec_id         String?     @db.VarChar(9)
+  start_date     DateTime    @db.Date
+  end_date       DateTime?   @db.Date
+  party          String?
+  start_congress DateTime?   @db.Date
+  end_congress   DateTime?   @db.Date
+  politician2    politician2 @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([vb_id, start_date])
+}
+
+model cmte {
+  fec_cand_id    String?     @db.VarChar(9)
+  cmte_id        String      @id(map: "pac_pkey") @db.VarChar(9)
+  pac_name       String?     @db.VarChar(255)
+  crp_recipcode  String?     @db.VarChar(8)
+  opensecrets_id String?     @db.VarChar(9)
+  vb_id          String?     @db.VarChar(8)
+  crp_primcode   String?     @db.VarChar(5)
+  crp_catorder   String?     @db.VarChar(3)
+  crp_industry   String?     @db.VarChar(255)
+  crp_sector     String?     @db.VarChar(255)
+  politician     politician? @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model ideology_score {
+  vb_id      String     @db.VarChar(8)
+  congress   Int
+  ideology   Float
+  politician politician @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([vb_id, congress])
+}
+
+model indiv_donation {
+  fec_trans_id String   @id @db.VarChar(255)
+  amount       Decimal  @db.Decimal
+  date         DateTime @db.Date
+  csuite       Int?
+  cmte_id      String   @db.VarChar(255)
+  vb_id        String?  @db.VarChar(8)
+  gvkey_id     String?  @db.VarChar(50)
+  wiki_id      String?  @db.VarChar(50)
+  unit         unit?    @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model leadership_spell {
+  vb_id      String     @db.VarChar(8)
+  chamber    String     @db.VarChar(8)
+  congress   Int
+  role_name  String     @db.VarChar(255)
+  rank       Int
+  start_date DateTime   @db.Date
+  end_date   DateTime   @db.Date
+  politician politician @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([vb_id, congress, role_name, start_date])
+}
+
+model majority_minority {
+  congress   Int
+  subtype    String   @db.VarChar(255)
+  party      String   @db.VarChar(255)
+  majmin     String   @db.VarChar(255)
+  start_date DateTime @db.Date
+  end_date   DateTime @db.Date
+
+  @@id([congress, subtype, party, start_date])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model newstuff {
+  wikiid     String?   @db.VarChar(15)
+  image      String?   @db.VarChar(500)
+  death_date DateTime? @db.Date
+
+  @@ignore
+}
+
+model pac_to_candidate {
+  fec_record_number String      @id @db.VarChar(255)
+  cmte_id           String      @db.VarChar(9)
+  date              DateTime?   @db.Date
+  amount            Decimal     @db.Decimal
+  opensecrets_id    String      @db.VarChar(9)
+  vb_id             String?     @db.VarChar(8)
+  politician        politician? @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model pac_to_pac {
+  fec_record_number String      @id @db.VarChar(255)
+  cmte_id           String      @db.VarChar(9)
+  opensecrets_id    String?     @db.VarChar(255)
+  vb_id             String?     @db.VarChar(8)
+  date              DateTime?   @db.Date
+  amount            Decimal     @db.Decimal
+  recip_id          String      @db.VarChar(9)
+  politician        politician? @relation(fields: [vb_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model politician2 {
+  vb_id          String    @id @db.VarChar(8)
+  bioguide_id    String?   @db.VarChar(7)
+  icpsr_id       String?   @db.VarChar(5)
+  opensecrets_id String?   @db.VarChar(9)
+  govtrack_id    Int?
+  wiki_id        String    @db.VarChar(15)
+  fname          String
+  mname          String?
+  lname          String
+  gender         String?   @db.VarChar(2)
+  birthday       DateTime? @db.Date
+  state          String?   @db.VarChar(2)
+  party          String?
+  full_name      String?
+  death_date     DateTime? @db.Date
+  image          String?
+  career2        career2[]
+}
+
+model politician_education {
+  politician_id String     @db.VarChar(8)
+  name          String     @db.VarChar(255)
+  university_id String     @db.VarChar(8)
+  politician    politician @relation(fields: [politician_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+  university    university @relation(fields: [university_id], references: [vb_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([politician_id, university_id])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model temp {
+  opensecrets_id String? @db.VarChar(15)
+  recipient_id   String? @db.VarChar(15)
+
+  @@ignore
+}
+
+model university_voters {
+  vb_id       String @db.VarChar(8)
+  wiki_id     String @db.VarChar(255)
+  name        String @db.VarChar(255)
+  year        Int
+  department  String @db.VarChar(255)
+  democrats   Int
+  republicans Int
+  total       Int
+
+  @@id([vb_id, year, department])
 }

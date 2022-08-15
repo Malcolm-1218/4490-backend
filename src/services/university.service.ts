@@ -205,6 +205,7 @@ class UniversityService {
         name: true,
         location: true,
         uni_rank: true,
+        uni_public: true,
       },
     };
 
